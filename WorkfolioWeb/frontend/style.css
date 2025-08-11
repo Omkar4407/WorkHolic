@@ -1,0 +1,79 @@
+body {
+  background: #f5f6fa;
+  color: #222;
+  font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+  margin: 0;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4 {
+  color: #1a2956;
+  font-weight: 600;
+}
+
+.container {
+  max-width: 480px;
+  margin: 40px auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(30,40,80,0.08);
+  padding: 32px 24px;
+}
+
+label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+}
+
+input, select {
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 18px;
+  border: 1px solid #cfd8dc;
+  border-radius: 6px;
+  font-size: 1rem;
+  background: #f9fafb;
+}
+
+button {
+  font-family: inherit;
+  font-size: 1rem;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 6px;
+  margin-right: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+button.start {
+  background: #2ecc40;
+  color: #fff;
+}
+button.start:hover {
+  background: #27ae60;
+}
+
+button.stop {
+  background: #e74c3c;
+  color: #fff;
+}
+button.stop:hover {
+  background: #c0392b;
+}
+
+button.capture {
+  background: #1a2956;
+  color: #fff;
+}
+button.capture:hover {
+  background: #223a7a;
+}
+
+@media (max-width: 600px) {
+  .container {
+    max-width: 98vw;
+    padding: 16px 4vw;
+  }
+}
