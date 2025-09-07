@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Dashboard - Time Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary-blue: #1d377f;
+            --accent-yellow: #e2b612;
+        }
+        .primary-bg { background-color: var(--primary-blue); }
+        .accent-bg { background-color: var(--accent-yellow); }
+        .primary-text { color: var(--primary-blue); }
+        .btn-disabled { background-color: #d1d5db; color: #6b7280; cursor: not-allowed; }
+        .table-stripe:nth-child(even) { background-color: #f9fafb; }
+    </style>
+</head>
+<body class="bg-white min-h-screen">
+    <!-- Navigation -->
+    <nav class="primary-bg shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <h1 class="text-white text-xl font-bold">Employee Dashboard</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <span class="text-white">Welcome, {{ username }}!</span>
+                    <a href="{{ url_for('logout') }}" class="text-white hover:text-gray-200">Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Time Tracking Actions -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold primary-text mb-6">Time Tracking</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <button id="clockInBtn" onclick="timeAction('clock_in')"
+                        class="accent-bg text-black font-semibold py-3 px-6 rounded-md hover:opacity-90 transition duration-200 {{ 'btn-disabled' if status.clocked_in }}">
+                    Clock In
+                </button>
+                
+                <button id="breakStartBtn" onclick="timeAction('break_start')"
+                        class="accent-bg text-black font-semibold py-3 px-6 rounded-md hover:opacity-90 transition duration-200 {{ 'btn-disabled' if not status.clocked_in or status.on_break or status.clocked_out }}">
+                    Start Break
+                </button>
+                
+                <button id="breakEndBtn" onclick="timeAction('break_end')"
+                        class="accent-bg text-black font-semibold py-3 px-6 rounded-md hover:opacity-90 transition duration-200 {{ 'btn-disabled' if not status.on_break }}">
+                    End Break
+                </button>
+                
+                <button id="clockOutBtn" onclick="timeAction('clock_out')"
+                        class="accent-bg text-black font-semibold py-3 px-6 rounded-md hover:opacity-90 transition duration-200 {{ 'btn-disabled' if not status.clocked_in or status.clocked_out }}">
+                    Clock Out
+                </button>
+            </div>
+
+            <div id="statusMessage" class="mt-4 p-3 rounded-md hidden"></div>
+        </div>
+
+        <!-- Current Status -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+            <h2 class="text-2xl font-bold primary-text mb-4">Today's Status</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="text-center">
+                    <div class="text-lg font-semibold {{ 'text-green-600' if status.clocked_in else 'text-gray-400' }}">
+                        Clock In
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        {{ 'Completed' if status.clocked_in else 'Pending' }}
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="text-lg font-semibold {{ 'text-yellow-600' if status.on_break else 'text-gray-400' }}">
+                        Break Status
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        {{ 'On Break' if status.on_break else 'Working' if status.clocked_in and not status.clocked_out else 'N/A' }}
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="text-lg font-semibold {{ 'text-red-600' if status.clocked_out else 'text-gray-400' }}">
+                        Clock Out
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        {{ 'Completed' if status.clocked_out else 'Pending' }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Attendance History -->
+        <div class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-2xl font-bold primary-text mb-6">Recent Attendance</h2>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full">
+                    <thead class="primary-bg">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Clock In</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Clock Out</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Break Start</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Break End</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">Total Hours</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for record in records %}
+                        <tr class="table-stripe">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.date }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.clock_in or '-' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.clock_out or '-' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.break_start or '-' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.break_end or '-' }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ record.total_hours or '-' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function timeAction(action) {
+            fetch('/time_action', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({action: action})
+            })
+            .then(response => response.json())
+            .then(data => {
+                const messageDiv = document.getElementById('statusMessage');
+                messageDiv.className = `mt-4 p-3 rounded-md ${data.success ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`;
+                messageDiv.textContent = data.message;
+                messageDiv.classList.remove('hidden');
+                
+                if (data.success) {
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                const messageDiv = document.getElementById('statusMessage');
+                messageDiv.className = 'mt-4 p-3 rounded-md bg-red-100 text-red-800';
+                messageDiv.textContent = 'An error occurred. Please try again.';
+                messageDiv.classList.remove('hidden');
+            });
+        }
+    </script>
+</body>
+</html>
